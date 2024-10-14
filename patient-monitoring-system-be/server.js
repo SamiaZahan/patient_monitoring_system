@@ -15,6 +15,7 @@ app.get('/api/cart', getCart);
 app.put('/api/cart/:id', updateCartItem);
 app.delete('/api/cart/:id', deleteCartItem);
 app.get('/api/menu', getMenu);
+
 app.get('/api/patients', getPatients);
 app.get('/api/patient/:id', getPatientById);
 
