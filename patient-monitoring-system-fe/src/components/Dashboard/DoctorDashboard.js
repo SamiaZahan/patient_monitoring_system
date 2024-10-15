@@ -1,12 +1,16 @@
+// src/components/DoctorDashboard.js
 import React, { useState, useEffect, useRef } from 'react';
 import { Line } from 'react-chartjs-2';
 import { useNavigate } from 'react-router-dom';
 import { Card, Row, Col, Spinner } from 'react-bootstrap';
+import { Navbar, Nav, Container, Table, Button } from 'react-bootstrap';
+import { FaHome, FaSignOutAlt } from 'react-icons/fa';
 import 'chart.js/auto';  // Needed for Chart.js
 
 const DoctorDashboard = () => {
   const [patients, setPatients] = useState([]);
   const [oxygenLevels, setOxygenLevels] = useState({});
+  const [predictedLevels, setPredictedLevels] = useState({});
   const navigate = useNavigate();
   const FETCH_INTERVAL = 1000; // 10 seconds
   const HOUR_LIMIT = 60 / 2; // number of 10-second intervals in 2 mins
@@ -31,23 +35,35 @@ const DoctorDashboard = () => {
     const fetchOxygenLevel = async (patientId) => {
       try {
         const oxygenLevel = (90 + (Math.random() * 10 - 5)).toFixed(2); // Simulated live oxygen level
+        const predictedLevel = (oxygenLevel * (1 + (Math.random() * 0.05 - 0.025))).toFixed(2); // Simulated predicted level
 
         setOxygenLevels(prevState => {
           const updatedLevels = prevState[patientId] || [];
-
-          // Limit the number of data points to the last 1 hour
           if (updatedLevels.length >= HOUR_LIMIT) {
             updatedLevels.shift();
           }
-
           const newDataPoint = {
             time: new Date().toLocaleTimeString(),
             value: oxygenLevel
           };
-          
           return {
             ...prevState,
             [patientId]: [...updatedLevels, newDataPoint]
+          };
+        });
+
+        setPredictedLevels(prevState => {
+          const updatedLevels = prevState[patientId] || [];
+          if (updatedLevels.length >= HOUR_LIMIT) {
+            updatedLevels.shift();
+          }
+          const newPredictedPoint = {
+            time: new Date().toLocaleTimeString(),
+            value: predictedLevel
+          };
+          return {
+            ...prevState,
+            [patientId]: [...updatedLevels, newPredictedPoint]
           };
         });
       } catch (error) {
@@ -62,26 +78,22 @@ const DoctorDashboard = () => {
     };
   }, []);
 
-  const handlePatientClick = (patientId) => {
-    navigate(`/patient/${patientId}`);
-  };
-
-  const getChartData = (patientId) => {
-    const dataPoints = oxygenLevels[patientId] || [];
+  const getChartData = (patientId, type) => {
+    const dataPoints = type === 'actual' ? oxygenLevels[patientId] || [] : predictedLevels[patientId] || [];
     return {
       labels: dataPoints.map((point) => point.time),
       datasets: [{
-        label: 'Oxygen Level (%)',
+        label: type === 'actual' ? 'Actual Oxygen Level (%)' : 'Predicted Oxygen Level (%)',
         data: dataPoints.map((point) => point.value),
         fill: false,
-        borderColor: 'black',
+        borderColor: type === 'actual' ? 'black' : 'blue',
         tension: 0.1
       }]
     };
   };
 
   const getCardColor = (oxygenLevel) => {
-    if (oxygenLevel < 81 || oxygenLevel > 90 ) {
+    if (oxygenLevel < 81 || oxygenLevel > 90) {
       return 'rgba(255, 0, 0, 0.5)'; // Red with 50% opacity
     } else if (oxygenLevel < 87) {
       return 'rgba(255, 255, 0, 0.5)'; // Yellow with 50% opacity
@@ -90,36 +102,98 @@ const DoctorDashboard = () => {
     }
   };
 
+  const handlePatientClick = (patientId) => {
+    navigate(`/patient/${patientId}`);
+  };
+
+  const getUpcomingTimes = () => {
+    const times = [];
+    const currentTime = new Date();
+    for (let i = 0; i < patients.length; i++) {
+      const newTime = new Date(currentTime.getTime() + i * 15 * 60000);
+      times.push(newTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    }
+    return times;
+  };
+
+  const upcomingTimes = getUpcomingTimes();
+
   return (
-    <div className="container">
-      <h2 className="my-4">Registered Patients</h2>
-      <Row>
-        {patients.map((patient) => {
-          const latestOxygenLevel = oxygenLevels[patient.patientId]?.slice(-1)[0]?.value;
-          const cardColor = latestOxygenLevel ? getCardColor(latestOxygenLevel) : 'white'; // Default to white if no data
+    <div className="doctor-dashboard-container">
+      <Navbar bg="primary" variant="dark" expand="lg">
+        <Container>
+          <Navbar.Brand href="#home">
+            <FaHome /> Home
+          </Navbar.Brand>
+          <Nav className="ml-auto">
+            <Nav.Link href="#profile">My Profile</Nav.Link>
+            <Nav.Link href="#logout">
+              <FaSignOutAlt /> Logout
+            </Nav.Link>
+          </Nav>
+        </Container>
+      </Navbar>
 
-          return (
-            <Col key={patient.id} md={6} className="mb-4">
-              <Card 
-                onClick={() => handlePatientClick(patient.patientId)} 
-                className="patient-card" 
-                style={{ cursor: 'pointer', backgroundColor: cardColor}}
-              >
-                <Card.Body>
-                  <Card.Title>{patient.name}</Card.Title>
-                  <Card.Text>ID: {patient.patientId}</Card.Text>
-                  <Card.Text>
-                    Oxygen Level: {latestOxygenLevel || <Spinner animation="border" size="sm" />}%
-                  </Card.Text>
-
-                  {/* Line Graph for Oxygen Levels */}
-                  <Line data={getChartData(patient.patientId)} />
-                </Card.Body>
-              </Card>
-            </Col>
-          );
-        })}
-      </Row>
+      <div className="container">
+        <Card className="mb-4">
+          <Card.Body>
+            <Card.Title>Upcoming Visiting Schedule</Card.Title>
+            <Table striped bordered hover>
+              <thead>
+                <tr>
+                  <th>Upcoming Visiting Time</th>
+                  <th>Doctors's Name</th>
+                  <th>Allocated Patient</th>
+                  <th>Room No.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {patients.map((patient, index) => (
+                  <tr key={index}>
+                    <td>{upcomingTimes[index]}</td>
+                    <td>{patient.age}</td>
+                    <td>{patient.name}</td>
+                    <td>{patient.roomNo}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </Card.Body>
+        </Card>
+        <h2 className="my-4">Patients Live SPO2</h2>
+        <Row>
+          {patients.map((patient) => {
+            const latestOxygenLevel = oxygenLevels[patient.patientId]?.slice(-1)[0]?.value;
+            return (
+              <Col key={patient.id} md={12} className="mb-4">
+                <Card className="patient-card" style={{ backgroundColor: latestOxygenLevel ? getCardColor(latestOxygenLevel) : 'white' }}
+                onClick={() => handlePatientClick(patient.patientId)} >  
+                  <Card.Body>
+                    <Card.Title>{patient.name}</Card.Title>
+                    <Card.Text>ID: {patient.patientId}</Card.Text>
+                    <Row>
+                      <Col md={6}>
+                        <h5>Actual Oxygen Level</h5>
+                        <Line data={getChartData(patient.patientId, 'actual')} />
+                      </Col>
+                      <Col md={6}>
+                        <h5>Predicted Oxygen Level</h5>
+                        <Line data={getChartData(patient.patientId, 'predicted')} />
+                      </Col>
+                    </Row>
+                  </Card.Body>
+                </Card>
+              </Col>
+            );
+          })}
+        </Row>
+        <Card>
+          <Card.Body>
+            <Card.Title>Chat with Staff</Card.Title>
+            <Button variant="primary">Start Chat</Button>
+          </Card.Body>
+        </Card>
+      </div>
     </div>
   );
 };

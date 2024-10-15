@@ -1,0 +1,132 @@
+[
+  {
+    "patientId": "P001",
+    "medications": [
+      {
+        "name": "Salbutamol Inhaler",
+        "morning": "TODO",
+        "afternoon": "TODO",
+        "evening": "TODO",
+        "night": "TODO"
+      },
+      {
+        "name": "Corticosteroid",
+        "morning": "TODO",
+        "afternoon": "TODO",
+        "evening": "TODO",
+        "night": "TODO"
+      },
+      {
+        "name": "Oxygen Therapy",
+        "morning": "TODO",
+        "afternoon": "TODO",
+        "evening": "TODO",
+        "night": "TODO"
+      }
+    ]
+  },
+  {
+    "patientId": "P002",
+    "medications": [
+      {
+        "name": "Antibiotics",
+        "morning": "TODO",
+        "afternoon": "TODO",
+        "evening": "TODO",
+        "night": "TODO"
+      },
+      {
+        "name": "IV Fluids",
+        "morning": "TODO",
+        "afternoon": "TODO",
+        "evening": "TODO",
+        "night": "TODO"
+      },
+      {
+        "name": "Cough Suppressant",
+        "morning": "TODO",
+        "afternoon": "TODO",
+        "evening": "TODO",
+        "night": "TODO"
+      }
+    ]
+  },
+  {
+    "patientId": "P003",
+    "medications": [
+      {
+        "name": "Bronchodilator",
+        "morning": "TODO",
+        "afternoon": "TODO",
+        "evening": "TODO",
+        "night": "TODO"
+      },
+      {
+        "name": "Oxygen Therapy",
+        "morning": "TODO",
+        "afternoon": "TODO",
+        "evening": "TODO",
+        "night": "TODO"
+      },
+      {
+        "name": "Steroid Inhaler",
+        "morning": "TODO",
+        "afternoon": "TODO",
+        "evening": "TODO",
+        "night": "TODO"
+      }
+    ]
+  },
+  {
+    "patientId": "P004",
+    "medications": [
+      {
+        "name": "Remdesivir",
+        "morning": "TODO",
+        "afternoon": "TODO",
+        "evening": "TODO",
+        "night": "TODO"
+      },
+      {
+        "name": "Dexamethasone",
+        "morning": "TODO",
+        "afternoon": "TODO",
+        "evening": "TODO",
+        "night": "TODO"
+      },
+      {
+        "name": "Oxygen Therapy",
+        "morning": "TODO",
+        "afternoon": "TODO",
+        "evening": "TODO",
+        "night": "TODO"
+      }
+    ]
+  },
+  {
+    "patientId": "P005",
+    "medications": [
+      {
+        "name": "Bronchodilator",
+        "morning": "TODO",
+        "afternoon": "TODO",
+        "evening": "TODO",
+        "night": "TODO"
+      },
+      {
+        "name": "Oxygen Therapy",
+        "morning": "TODO",
+        "afternoon": "TODO",
+        "evening": "TODO",
+        "night": "TODO"
+      },
+      {
+        "name": "Antibiotics",
+        "morning": "TODO",
+        "afternoon": "TODO",
+        "evening": "TODO",
+        "night": "TODO"
+      }
+    ]
+  }
+]

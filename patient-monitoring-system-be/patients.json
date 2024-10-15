@@ -5,6 +5,7 @@
     "age": 45,
     "gender": "Male",
     "condition": "Asthma",
+    "roomNo": 301,
     "oxygenLevel": 95
   },
   {
@@ -13,6 +14,7 @@
     "age": 38,
     "gender": "Female",
     "condition": "Pneumonia",
+    "roomNo": 202,
     "oxygenLevel": 90
   },
   {
@@ -21,6 +23,7 @@
     "age": 60,
     "gender": "Male",
     "condition": "COPD",
+    "roomNo": 101,
     "oxygenLevel": 88
   },
   {
@@ -29,6 +32,7 @@
     "age": 30,
     "gender": "Female",
     "condition": "COVID-19",
+    "roomNo": 303,
     "oxygenLevel": 92
   },
   {
@@ -37,46 +41,7 @@
     "age": 50,
     "gender": "Male",
     "condition": "Emphysema",
+    "roomNo": 205,
     "oxygenLevel": 85
-  },
-  {
-    "patientId": "P006",
-    "name": "Sophia Wilson",
-    "age": 27,
-    "gender": "Female",
-    "condition": "Bronchitis",
-    "oxygenLevel": 96
-  },
-  {
-    "patientId": "P007",
-    "name": "James Taylor",
-    "age": 55,
-    "gender": "Male",
-    "condition": "Sleep Apnea",
-    "oxygenLevel": 89
-  },
-  {
-    "patientId": "P008",
-    "name": "Olivia Martinez",
-    "age": 42,
-    "gender": "Female",
-    "condition": "Lung Cancer",
-    "oxygenLevel": 86
-  },
-  {
-    "patientId": "P009",
-    "name": "Liam Anderson",
-    "age": 33,
-    "gender": "Male",
-    "condition": "Pulmonary Fibrosis",
-    "oxygenLevel": 91
-  },
-  {
-    "patientId": "P010",
-    "name": "Ava Thomas",
-    "age": 65,
-    "gender": "Female",
-    "condition": "COVID-19",
-    "oxygenLevel": 87
   }
 ]
