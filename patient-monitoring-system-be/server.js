@@ -12,15 +12,16 @@ const Medication = require("./models/medication");
 const mongoose = require('mongoose');
 
 
-mongoose.connect(process.env.MONGO_URI, {
-  serverSelectionTimeoutMS: 5000, // Timeout after 5s
-})
-  .then(() => {
-    console.log('Connected to MongoDB Atlas successfully!');
-  })
-  .catch((error) => {
-    console.error('Failed to connect to MongoDB Atlas:', error);
-  });
+// mongoose.connect(process.env.MONGO_URI, {
+//   serverSelectionTimeoutMS: 5000, // Timeout after 5s
+// })
+//   .then(() => {
+//     console.log('Connected to MongoDB Atlas successfully!');
+    
+//   })
+//   .catch((error) => {
+//     console.error('Failed to connect to MongoDB Atlas:', error);
+//   });
 
 
 // Routes
@@ -59,6 +60,8 @@ async function getMedicationById(req, res)  {
     res.status(500).json({ message: 'An error occurred while fetching medication data.', error });
   }
 };
+
+// Rafi vai work on Medication Post, Uopdate, Delete
 
 
 async function getPatientById(req, res) {

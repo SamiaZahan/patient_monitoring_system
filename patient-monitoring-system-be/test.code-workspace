@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "test",
+			"path": "../../test"
+		},
+		{
+			"name": "patient_monitoring_system",
+			"path": ".."
+		}
+	],
+	"settings": {}
+}
