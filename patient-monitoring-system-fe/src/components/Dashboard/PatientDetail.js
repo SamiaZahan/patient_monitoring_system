@@ -12,7 +12,88 @@ const PatientDetail = () => {
   const [newMedication, setNewMedication] = useState({ name: '', morning: '', afternoon: '', evening: '', night: '' });
   const [selectedMedicationIndex, setSelectedMedicationIndex] = useState(null);
 
-  // Fetch patient details and medication details
+  const handleAddMedication = () => {
+    setShowAddModal(true);
+  };
+
+  const handleUpdateMedication = (index) => {
+    setSelectedMedicationIndex(index);
+    setNewMedication(medicationData[index]);
+    setShowUpdateModal(true);
+  };
+
+  const handleSaveNewMedication = async () => {
+    try {
+      // API request to add a new medication
+      const response = await fetch(`http://localhost:5000/api/medications/${patientId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newMedication),
+      });
+      if (response.ok) {
+        const addedMedication = await response.json();
+        setMedicationData([...medicationData, addedMedication]);
+        setNewMedication({ name: '', morning: '', afternoon: '', evening: '', night: '' });
+        setShowAddModal(false);
+      } else {
+        console.error("Failed to add medication");
+      }
+    } catch (error) {
+      console.error("Error adding medication:", error);
+    }
+  };
+
+  const handleSaveUpdatedMedication = async () => {
+    try {
+      // API request to update medication
+      const response = await fetch(`http://localhost:5000/api/medications/${patientId}/${medicationData[selectedMedicationIndex]._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newMedication),
+      });
+      if (response.ok) {
+        const updatedMedications = [...medicationData];
+        updatedMedications[selectedMedicationIndex] = newMedication;
+        setMedicationData(updatedMedications);
+        setNewMedication({ name: '', morning: '', afternoon: '', evening: '', night: '' });
+        setShowUpdateModal(false);
+      } else {
+        console.error("Failed to update medication");
+      }
+    } catch (error) {
+      console.error("Error updating medication:", error);
+    }
+  };
+
+  const handleDeleteMedication = async (index) => {
+    try {
+      // API request to delete medication
+      const response = await fetch(`http://localhost:5000/api/medications/${patientId}/${medicationData[index]._id}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        const updatedMedications = medicationData.filter((_, i) => i !== index);
+        setMedicationData(updatedMedications);
+      } else {
+        console.error("Failed to delete medication");
+      }
+    } catch (error) {
+      console.error("Error deleting medication:", error);
+    }
+  };
+
+  const handleCloseAddModal = () => {
+    setShowAddModal(false);
+  };
+
+  const handleCloseUpdateModal = () => {
+    setShowUpdateModal(false);
+  };
+
   useEffect(() => {
     const fetchPatientDetails = async () => {
       try {
@@ -38,65 +119,6 @@ const PatientDetail = () => {
     fetchMedicationDetails();
   }, [patientId]);
 
-  // Add new medication
-  const handleSaveNewMedication = async () => {
-    try {
-      const response = await fetch(`http://localhost:5000/api/medications/${patientId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ...newMedication }),
-      });
-      if (response.ok) {
-        const addedMedication = await response.json();
-        setMedicationData([...medicationData, addedMedication]);
-        setShowAddModal(false);
-        setNewMedication({ name: '', morning: '', afternoon: '', evening: '', night: '' });
-      }
-    } catch (error) {
-      console.error('Error adding medication:', error);
-    }
-  };
-
-  // Update existing medication
-  const handleSaveUpdatedMedication = async () => {
-    try {
-      const response = await fetch(`http://localhost:5000/api/medications/${patientId}/${selectedMedicationIndex}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newMedication),
-      });
-      if (response.ok) {
-        const updatedMedications = [...medicationData];
-        updatedMedications[selectedMedicationIndex] = newMedication;
-        setMedicationData(updatedMedications);
-        setShowUpdateModal(false);
-        setNewMedication({ name: '', morning: '', afternoon: '', evening: '', night: '' });
-      }
-    } catch (error) {
-      console.error('Error updating medication:', error);
-    }
-  };
-
-  // Delete a medication
-  const handleDeleteMedication = async (index) => {
-    try {
-      const response = await fetch(`http://localhost:5000/api/medications/${patientId}/${index}`, {
-        method: 'DELETE',
-      });
-      if (response.ok) {
-        const updatedMedications = medicationData.filter((_, i) => i !== index);
-        setMedicationData(updatedMedications);
-      }
-    } catch (error) {
-      console.error('Error deleting medication:', error);
-    }
-  };
-
-
   return (
     <div className="patient-detail-container">
       <Navbar bg="primary" variant="dark" expand="lg">
@@ -114,7 +136,6 @@ const PatientDetail = () => {
       </Navbar>
 
       <Container className="mt-5">
-        {/*patient detail */}
         <Row className="justify-content-center">
           <Col md={8}>
             <Card className="shadow-lg">
@@ -152,166 +173,161 @@ const PatientDetail = () => {
           </Col>
         </Row>
 
-          {/* Medication */}
-      <Row className="justify-content-center">
-        <Col md={8}>
-          <Card className="shadow-lg mt-4">
-            <Card.Body>
-              <h4>Medication Schedule</h4>
-              <Button className="mb-3" variant="primary" onClick={handleAddMedication}>Add Medication</Button>
-              <table className="table table-striped table-bordered table-hover mt-3">
-                <thead>
-                  <tr>
-                    <th>Medication Name</th>
-                    <th>Morning (8:00 AM)</th>
-                    <th>Afternoon (12:00 PM)</th>
-                    <th>Evening (6:00 PM)</th>
-                    <th>Night (10:00 PM)</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {medicationData.map((medication, index) => (
-                    <tr key={index}>
-                      <td>{medication.name}</td>
-                      <td>{medication.morning}</td>
-                      <td>{medication.afternoon}</td>
-                      <td>{medication.evening}</td>
-                      <td>{medication.night}</td>
-                      <td>
-                        <Button variant="warning" onClick={() => handleUpdateMedication(index)} className="m-2">Update</Button>
-                        <br></br>
-                        <Button variant="danger" onClick={() => handleDeleteMedication(index)}>Delete</Button>
-                      </td>
+        <Row className="justify-content-center">
+          <Col md={8}>
+            <Card className="shadow-lg mt-4">
+              <Card.Body>
+                <h4>Medication Schedule</h4>
+                <Button className="mb-3" variant="primary" onClick={handleAddMedication}>Add Medication</Button>
+                <table className="table table-striped table-bordered table-hover mt-3">
+                  <thead>
+                    <tr>
+                      <th>Medication Name</th>
+                      <th>Morning (8:00 AM)</th>
+                      <th>Afternoon (12:00 PM)</th>
+                      <th>Evening (6:00 PM)</th>
+                      <th>Night (10:00 PM)</th>
+                      <th>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+                  </thead>
+                  <tbody>
+                    {medicationData.map((medication, index) => (
+                      <tr key={index}>
+                        <td>{medication.name}</td>
+                        <td>{medication.morning}</td>
+                        <td>{medication.afternoon}</td>
+                        <td>{medication.evening}</td>
+                        <td>{medication.night}</td>
+                        <td>
+                          <Button variant="warning" onClick={() => handleUpdateMedication(index)} className="m-2">Update</Button>
+                          <Button variant="danger" onClick={() => handleDeleteMedication(index)}>Delete</Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
 
-      {/* Add Medication Modal */}
-      <Modal show={showAddModal} onHide={handleCloseAddModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>Add Medication</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group controlId="medicationName">
-              <Form.Label>Medication Name</Form.Label>
-              <Form.Control
-                type="text"
-                value={newMedication.name}
-                onChange={(e) => setNewMedication({ ...newMedication, name: e.target.value })}
-                placeholder="Enter medication name"
-              />
-            </Form.Group>
-            <Form.Group controlId="morning">
-              <Form.Label>Morning (8:00 AM)</Form.Label>
-              <Form.Control
-                type="text"
-                value={newMedication.morning}
-                onChange={(e) => setNewMedication({ ...newMedication, morning: e.target.value })}
-                placeholder="Enter dosage for morning"
-              />
-            </Form.Group>
-            <Form.Group controlId="afternoon">
-              <Form.Label>Afternoon (12:00 PM)</Form.Label>
-              <Form.Control
-                type="text"
-                value={newMedication.afternoon}
-                onChange={(e) => setNewMedication({ ...newMedication, afternoon: e.target.value })}
-                placeholder="Enter dosage for afternoon"
-              />
-            </Form.Group>
-            <Form.Group controlId="evening">
-              <Form.Label>Evening (6:00 PM)</Form.Label>
-              <Form.Control
-                type="text"
-                value={newMedication.evening}
-                onChange={(e) => setNewMedication({ ...newMedication, evening: e.target.value })}
-                placeholder="Enter dosage for evening"
-              />
-            </Form.Group>
-            <Form.Group controlId="night">
-              <Form.Label>Night (10:00 PM)</Form.Label>
-              <Form.Control
-                type="text"
-                value={newMedication.night}
-                onChange={(e) => setNewMedication({ ...newMedication, night: e.target.value })}
-                placeholder="Enter dosage for night"
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseAddModal}>Close</Button>
-          <Button variant="primary" onClick={handleSaveNewMedication}>Save Medication</Button>
-        </Modal.Footer>
-      </Modal>
+        <Modal show={showAddModal} onHide={handleCloseAddModal}>
+          <Modal.Header closeButton>
+            <Modal.Title>Add Medication</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form>
+              <Form.Group controlId="medicationName">
+                <Form.Label>Medication Name</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={newMedication.name}
+                  onChange={(e) => setNewMedication({ ...newMedication, name: e.target.value })}
+                  placeholder="Enter medication name"
+                />
+              </Form.Group>
+              <Form.Group controlId="morning">
+                <Form.Label>Morning (8:00 AM)</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={newMedication.morning}
+                  onChange={(e) => setNewMedication({ ...newMedication, morning: e.target.value })}
+                  placeholder="Enter dosage for morning"
+                />
+              </Form.Group>
+              <Form.Group controlId="afternoon">
+                <Form.Label>Afternoon (12:00 PM)</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={newMedication.afternoon}
+                  onChange={(e) => setNewMedication({ ...newMedication, afternoon: e.target.value })}
+                  placeholder="Enter dosage for afternoon"
+                />
+              </Form.Group>
+              <Form.Group controlId="evening">
+                <Form.Label>Evening (6:00 PM)</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={newMedication.evening}
+                  onChange={(e) => setNewMedication({ ...newMedication, evening: e.target.value })}
+                  placeholder="Enter dosage for evening"
+                />
+              </Form.Group>
+              <Form.Group controlId="night">
+                <Form.Label>Night (10:00 PM)</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={newMedication.night}
+                  onChange={(e) => setNewMedication({ ...newMedication, night: e.target.value })}
+                  placeholder="Enter dosage for night"
+                />
+              </Form.Group>
+            </Form>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleCloseAddModal}>Cancel</Button>
+            <Button variant="primary" onClick={handleSaveNewMedication}>Save Medication</Button>
+          </Modal.Footer>
+        </Modal>
 
-      {/* Update Medication Modal */}
-        {/* Add Medication Modal */}
-        <Modal show={show} onHide={handleClose}>
-      <Modal.Header closeButton>
-        <Modal.Title>{title}</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Form>
-          <Form.Group controlId="medicationName">
-            <Form.Label>Medication Name</Form.Label>
-            <Form.Control
-              type="text"
-              value={medication.name}
-              onChange={(e) => setMedication({ ...medication, name: e.target.value })}
-              placeholder="Enter medication name"
-            />
-          </Form.Group>
-          <Form.Group controlId="morning">
-            <Form.Label>Morning (8:00 AM)</Form.Label>
-            <Form.Control
-              type="text"
-              value={medication.morning}
-              onChange={(e) => setMedication({ ...medication, morning: e.target.value })}
-              placeholder="Enter dosage for morning"
-            />
-          </Form.Group>
-          <Form.Group controlId="afternoon">
-            <Form.Label>Afternoon (12:00 PM)</Form.Label>
-            <Form.Control
-              type="text"
-              value={medication.afternoon}
-              onChange={(e) => setMedication({ ...medication, afternoon: e.target.value })}
-              placeholder="Enter dosage for afternoon"
-            />
-          </Form.Group>
-          <Form.Group controlId="evening">
-            <Form.Label>Evening (6:00 PM)</Form.Label>
-            <Form.Control
-              type="text"
-              value={medication.evening}
-              onChange={(e) => setMedication({ ...medication, evening: e.target.value })}
-              placeholder="Enter dosage for evening"
-            />
-          </Form.Group>
-          <Form.Group controlId="night">
-            <Form.Label>Night (10:00 PM)</Form.Label>
-            <Form.Control
-              type="text"
-              value={medication.night}
-              onChange={(e) => setMedication({ ...medication, night: e.target.value })}
-              placeholder="Enter dosage for night"
-            />
-          </Form.Group>
-        </Form>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" onClick={handleClose}>Close</Button>
-        <Button variant="primary" onClick={handleSave}>Save Changes</Button>
-      </Modal.Footer>
-    </Modal>
+        <Modal show={showUpdateModal} onHide={handleCloseUpdateModal}>
+          <Modal.Header closeButton>
+            <Modal.Title>Update Medication</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form>
+              <Form.Group controlId="medicationName">
+                <Form.Label>Medication Name</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={newMedication.name}
+                  onChange={(e) => setNewMedication({ ...newMedication, name: e.target.value })}
+                  placeholder="Enter medication name"
+                />
+              </Form.Group>
+              <Form.Group controlId="morning">
+                <Form.Label>Morning (8:00 AM)</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={newMedication.morning}
+                  onChange={(e) => setNewMedication({ ...newMedication, morning: e.target.value })}
+                  placeholder="Enter dosage for morning"
+                />
+              </Form.Group>
+              <Form.Group controlId="afternoon">
+                <Form.Label>Afternoon (12:00 PM)</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={newMedication.afternoon}
+                  onChange={(e) => setNewMedication({ ...newMedication, afternoon: e.target.value })}
+                  placeholder="Enter dosage for afternoon"
+                />
+              </Form.Group>
+              <Form.Group controlId="evening">
+                <Form.Label>Evening (6:00 PM)</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={newMedication.evening}
+                  onChange={(e) => setNewMedication({ ...newMedication, evening: e.target.value })}
+                  placeholder="Enter dosage for evening"
+                />
+              </Form.Group>
+              <Form.Group controlId="night">
+                <Form.Label>Night (10:00 PM)</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={newMedication.night}
+                  onChange={(e) => setNewMedication({ ...newMedication, night: e.target.value })}
+                  placeholder="Enter dosage for night"
+                />
+              </Form.Group>
+            </Form>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleCloseUpdateModal}>Cancel</Button>
+            <Button variant="primary" onClick={handleSaveUpdatedMedication}>Update Medication</Button>
+          </Modal.Footer>
+        </Modal>
       </Container>
     </div>
   );
