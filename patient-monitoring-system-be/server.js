@@ -45,21 +45,49 @@ async function getPatients(req, res) {
 }
 
 // Serve medication details from the JSON file
-async function getMedicationById(req, res)  {
-  // Define the "Get Medication by Patient ID" API endpoint
-  try {
-    const { patientId } = req.params;
-    const medication = await Medication.findOne({ patientId });
+// async function getMedicationById(req, res)  {
+//   try {
+//     const { patientId } = req.params;
+//     const medication = await Medication.findOne({ patientId });
 
-    if (medication) {
-      res.status(200).json(medication);
-    } else {
-      res.status(404).json({ message: 'Medications not found for the specified patient.' });
+//     if (medication) {
+//       res.status(200).json(medication);
+//     } else {
+//       res.status(404).json({ message: 'Medications not found for the specified patient.' });
+//     }
+//   } catch (error) {
+//     res.status(500).json({ message: 'An error occurred while fetching medication data.', error });
+//   }
+// };
+
+
+async function getMedicationById(req, res) {
+  const { patientId } = req.params;
+
+  // Read medication data from JSON file
+  fs.readFile('./medication.json', 'utf-8', (err, data) => {
+    if (err) {
+      console.error('Error reading the JSON file:', err);
+      return res.status(500).json({ message: 'Internal server error' });
     }
-  } catch (error) {
-    res.status(500).json({ message: 'An error occurred while fetching medication data.', error });
-  }
-};
+
+    try {
+      const medications = JSON.parse(data);
+
+      // Find the medications for the given patientId
+      const patientMedications = medications.find((entry) => entry.patientId === patientId);
+
+      if (patientMedications) {
+        return res.status(200).json(patientMedications);
+      } else {
+        return res.status(404).json({ message: 'Medications not found for the specified patient.' });
+      }
+    } catch (parseError) {
+      console.error('Error parsing the JSON file:', parseError);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+}
 
 // Rafi vai work on Medication Post, Uopdate, Delete
 
