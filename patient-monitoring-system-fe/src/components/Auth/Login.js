@@ -3,6 +3,10 @@ import { Form, Button, Container, Row, Col, Card } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import backgroundImage from '../../asset/bg.jpg';
 import './Auth.css'
+import  { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
 const backgroundStyle = {
   position: 'relative',
   height: '100vh',
@@ -32,6 +36,35 @@ const cardStyle = {
 };
 
 const Login = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [role, setRole] = useState('');
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('http://localhost:5000/api/auth/login', {
+        email,
+        password,
+        role,
+      });
+      const { token, role: userRole } = response.data;
+      localStorage.setItem('token', token);
+
+      if (userRole === 'doctor') {
+        navigate('/doctor-dashboard');
+      } else if (userRole === 'staff') {
+        navigate('/staff-dashboard');
+      } else if (userRole === 'patient') {
+        navigate('/patient-dashboard');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('Invalid credentials');
+    }
+  };
+
   return (
     <div style={backgroundStyle}>
       <div style={backgroundImageStyle}></div>
@@ -41,15 +74,36 @@ const Login = () => {
             <Card style={cardStyle}>
               <Card.Body>
                 <h2 className="text-center mb-4">Login</h2>
-                <Form>
+                <Form onSubmit={handleLogin}>
+                  <Form.Group controlId="formBasicRole" className="left-aligned-group">
+                    <Form.Label className="left-aligned-label">Choose A Role</Form.Label>
+                    <Form.Control as="select" value={role} onChange={(e) => setRole(e.target.value)} required>
+                      <option value="" disabled>Select a role</option>
+                      <option value="patient">Patient</option>
+                      <option value="doctor">Doctor</option>
+                      <option value="staff">Staff</option>
+                    </Form.Control>
+                  </Form.Group>
                   <Form.Group controlId="formBasicEmail" className="left-aligned-group">
                     <Form.Label className="left-aligned-label">Email address</Form.Label>
-                    <Form.Control type="email" placeholder="Enter email" />
+                    <Form.Control
+                      type="email"
+                      placeholder="Enter email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
                   </Form.Group>
 
                   <Form.Group controlId="formBasicPassword" className="left-aligned-group">
                     <Form.Label className="left-aligned-label">Password</Form.Label>
-                    <Form.Control type="password" placeholder="Password" />
+                    <Form.Control
+                      type="password"
+                      placeholder="Password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
                   </Form.Group>
 
                   <Button variant="primary" type="submit" className="mt-3 w-100">

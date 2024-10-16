@@ -7,8 +7,14 @@ app.use(express.json());
 app.use(cors())
 const port = 5000;
 require('dotenv').config();
-
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const Doctor = require('./models/Doctor');
+const Staff = require('./models/Staff');
 const Patient = require('./models/Patient');
+
+const router = express.Router();
+
 const mongoose = require('mongoose');
 
 
@@ -22,6 +28,41 @@ const mongoose = require('mongoose');
 //   .catch((error) => {
 //     console.error('Failed to connect to MongoDB Atlas:', error);
 //   });
+
+// Login API
+router.post('/login', async (req, res) => {
+  const { email, password, role } = req.body;
+
+  try {
+    let user;
+
+    if (role === 'doctor') {
+      user = await Doctor.findOne({ email });
+    } else if (role === 'staff') {
+      user = await Staff.findOne({ email });
+    } else if (role === 'patient') {
+      user = await Patient.findOne({ email });
+    } else {
+      return res.status(400).json({ message: 'Invalid role' });
+    }
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign({ id: user._id, role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.status(200).json({ token, role });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+module.exports = router;
 
 
 // Routes
