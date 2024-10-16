@@ -19,15 +19,15 @@ app.use(express.json());
 app.use(cors());
 
 // MongoDB Connection
-// mongoose.connect(process.env.MONGO_URI, {
-//   serverSelectionTimeoutMS: 5000, // Timeout after 5s
-// })
-//   .then(() => {
-//     console.log('Connected to MongoDB Atlas successfully!');
-//   })
-//   .catch((error) => {
-//     console.error('Failed to connect to MongoDB Atlas:', error);
-//   });
+mongoose.connect(process.env.MONGO_URI, {
+  serverSelectionTimeoutMS: 5000, // Timeout after 5s
+})
+  .then(() => {
+    console.log('Connected to MongoDB Atlas successfully!');
+  })
+  .catch((error) => {
+    console.error('Failed to connect to MongoDB Atlas:', error);
+  });
 
 
 app.post('/api/auth/login', async (req, res) => {
