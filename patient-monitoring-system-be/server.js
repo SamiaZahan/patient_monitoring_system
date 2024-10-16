@@ -29,10 +29,7 @@ app.use(cors());
 //     console.error('Failed to connect to MongoDB Atlas:', error);
 //   });
 
-const salt =  bcrypt.genSalt(10);
-const hashedPassword =  bcrypt.hash("password1", salt);
-console.log(hashedPassword)
-// Login API
+
 app.post('/api/auth/login', async (req, res) => {
   const { email, password, role } = req.body;
 
