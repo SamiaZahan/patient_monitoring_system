@@ -1,59 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Navbar, Nav, Container, Card, Row, Col, Button, Modal, Form  } from 'react-bootstrap';
+import { Navbar, Nav, Container, Card, Row, Col, Button, Modal, Form } from 'react-bootstrap';
 import { FaHome, FaSignOutAlt, FaUserCircle } from 'react-icons/fa';
-import MedicationModal from './MedicationModal';
 
 const PatientDetail = () => {
   const { patientId } = useParams();
   const [patientData, setPatientData] = useState({});
-  
   const [medicationData, setMedicationData] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [newMedication, setNewMedication] = useState({ name: '', morning: '', afternoon: '', evening: '', night: '' });
   const [selectedMedicationIndex, setSelectedMedicationIndex] = useState(null);
-  const handleAddMedication = () => {
-    setShowAddModal(true);
-  };
 
-  const handleUpdateMedication = (index) => {
-    setSelectedMedicationIndex(index);
-    setNewMedication(medicationData[index]);
-    setShowUpdateModal(true);
-  };
-
-  const handleSaveNewMedication = () => {
-    setMedicationData([...medicationData, newMedication]);
-    setNewMedication({ name: '', morning: '', afternoon: '', evening: '', night: '' });
-    setShowAddModal(false);
-  };
-
-  const handleSaveUpdatedMedication = () => {
-    const updatedMedications = [...medicationData];
-    updatedMedications[selectedMedicationIndex] = newMedication;
-    setMedicationData(updatedMedications);
-    setNewMedication({ name: '', morning: '', afternoon: '', evening: '', night: '' });
-    setShowUpdateModal(false);
-  };
-
-  const handleDeleteMedication = (index) => {
-    const updatedMedications = medicationData.filter((_, i) => i !== index);
-    setMedicationData(updatedMedications);
-  };
-
-  const handleCloseAddModal = () => {
-    setShowAddModal(false);
-  };
-
-  const handleCloseUpdateModal = () => {
-    setShowUpdateModal(false);
-  };
-
+  // Fetch patient details and medication details
   useEffect(() => {
     const fetchPatientDetails = async () => {
       try {
-        // Replace with your actual API request for patient details
         const response = await fetch(`http://localhost:5000/api/patient/${patientId}`);
         const data = await response.json();
         setPatientData(data);
@@ -61,19 +23,79 @@ const PatientDetail = () => {
         console.error("Error fetching patient details:", error);
       }
     };
+
     const fetchMedicationDetails = async () => {
-        try {
-          const response = await fetch(`http://localhost:5000/api/medications/${patientId}`);
-          const data = await response.json();
-          setMedicationData(data.medications);
-        } catch (error) {
-          console.error("Error fetching medication details:", error);
-        }
-      };
+      try {
+        const response = await fetch(`http://localhost:5000/api/medications/${patientId}`);
+        const data = await response.json();
+        setMedicationData(data.medications);
+      } catch (error) {
+        console.error("Error fetching medication details:", error);
+      }
+    };
 
     fetchPatientDetails();
     fetchMedicationDetails();
   }, [patientId]);
+
+  // Add new medication
+  const handleSaveNewMedication = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/medications/${patientId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...newMedication }),
+      });
+      if (response.ok) {
+        const addedMedication = await response.json();
+        setMedicationData([...medicationData, addedMedication]);
+        setShowAddModal(false);
+        setNewMedication({ name: '', morning: '', afternoon: '', evening: '', night: '' });
+      }
+    } catch (error) {
+      console.error('Error adding medication:', error);
+    }
+  };
+
+  // Update existing medication
+  const handleSaveUpdatedMedication = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/medications/${patientId}/${selectedMedicationIndex}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newMedication),
+      });
+      if (response.ok) {
+        const updatedMedications = [...medicationData];
+        updatedMedications[selectedMedicationIndex] = newMedication;
+        setMedicationData(updatedMedications);
+        setShowUpdateModal(false);
+        setNewMedication({ name: '', morning: '', afternoon: '', evening: '', night: '' });
+      }
+    } catch (error) {
+      console.error('Error updating medication:', error);
+    }
+  };
+
+  // Delete a medication
+  const handleDeleteMedication = async (index) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/medications/${patientId}/${index}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        const updatedMedications = medicationData.filter((_, i) => i !== index);
+        setMedicationData(updatedMedications);
+      }
+    } catch (error) {
+      console.error('Error deleting medication:', error);
+    }
+  };
+
 
   return (
     <div className="patient-detail-container">
@@ -232,24 +254,64 @@ const PatientDetail = () => {
 
       {/* Update Medication Modal */}
         {/* Add Medication Modal */}
-        <MedicationModal
-        show={showAddModal}
-        handleClose={handleCloseAddModal}
-        medication={newMedication}
-        setMedication={setNewMedication}
-        handleSave={handleSaveNewMedication}
-        title="Add Medication"
-      />
-
-      {/* Update Medication Modal */}
-      <MedicationModal
-        show={showUpdateModal}
-        handleClose={handleCloseUpdateModal}
-        medication={newMedication}
-        setMedication={setNewMedication}
-        handleSave={handleSaveUpdatedMedication}
-        title="Update Medication"
-      />
+        <Modal show={show} onHide={handleClose}>
+      <Modal.Header closeButton>
+        <Modal.Title>{title}</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form>
+          <Form.Group controlId="medicationName">
+            <Form.Label>Medication Name</Form.Label>
+            <Form.Control
+              type="text"
+              value={medication.name}
+              onChange={(e) => setMedication({ ...medication, name: e.target.value })}
+              placeholder="Enter medication name"
+            />
+          </Form.Group>
+          <Form.Group controlId="morning">
+            <Form.Label>Morning (8:00 AM)</Form.Label>
+            <Form.Control
+              type="text"
+              value={medication.morning}
+              onChange={(e) => setMedication({ ...medication, morning: e.target.value })}
+              placeholder="Enter dosage for morning"
+            />
+          </Form.Group>
+          <Form.Group controlId="afternoon">
+            <Form.Label>Afternoon (12:00 PM)</Form.Label>
+            <Form.Control
+              type="text"
+              value={medication.afternoon}
+              onChange={(e) => setMedication({ ...medication, afternoon: e.target.value })}
+              placeholder="Enter dosage for afternoon"
+            />
+          </Form.Group>
+          <Form.Group controlId="evening">
+            <Form.Label>Evening (6:00 PM)</Form.Label>
+            <Form.Control
+              type="text"
+              value={medication.evening}
+              onChange={(e) => setMedication({ ...medication, evening: e.target.value })}
+              placeholder="Enter dosage for evening"
+            />
+          </Form.Group>
+          <Form.Group controlId="night">
+            <Form.Label>Night (10:00 PM)</Form.Label>
+            <Form.Control
+              type="text"
+              value={medication.night}
+              onChange={(e) => setMedication({ ...medication, night: e.target.value })}
+              placeholder="Enter dosage for night"
+            />
+          </Form.Group>
+        </Form>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={handleClose}>Close</Button>
+        <Button variant="primary" onClick={handleSave}>Save Changes</Button>
+      </Modal.Footer>
+    </Modal>
       </Container>
     </div>
   );
