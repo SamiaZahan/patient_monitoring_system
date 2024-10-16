@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Button } from 'react-bootstrap';
 import MedicationModal from './MedicationModal';
 import axios from 'axios';
+import { useParams } from 'react-router-dom';
 
-const MedicationSchedule = ({ patientId }) => {
+const PatientDetail = () => {
+  const { patientId } = useParams()
   const [medicationData, setMedicationData] = useState([]);
   const [patientDetails, setPatientDetails] = useState({});
   const [showAddModal, setShowAddModal] = useState(false);
@@ -158,4 +160,4 @@ const MedicationSchedule = ({ patientId }) => {
   );
 };
 
-export default MedicationSchedule;
+export default PatientDetail;
