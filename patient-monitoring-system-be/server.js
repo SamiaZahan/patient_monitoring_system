@@ -27,8 +27,10 @@ const mongoose = require('mongoose');
 // Routes
 app.get('/api/patients', getPatients);
 app.get('/api/patient/:id', getPatientById);
-app.get('/api/medications/:patientId', getMedicationById )
-
+app.get('/api/medications/:patientId', getMedicationById );
+app.post('/api/madication/', postMedication);
+app.put('api/medication/:patientId', updateMedicationById);
+app.delete('api/medication/:patientId', deleteMedicationById);
 
 
 // Functions
@@ -60,6 +62,78 @@ async function getPatients(req, res) {
 //   }
 // };
 
+// Get medication by patientId
+async function getMedicationById(req, res) {
+  try {
+    const medication = await Medication.findOne({ patientId: req.params.patientId });
+    if (!medication) {
+      return res.status(404).json({ message: 'Medication not found' });
+    }
+    res.json(medication);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Add medication for a patient
+async function postMedication(req, res) {
+  const { patientId, medications } = req.body;
+
+  try {
+    // Check if a record for the patient already exists
+    let medication = await Medication.findOne({ patientId });
+
+    if (medication) {
+      return res.status(400).json({ message: 'Medication already exists for this patient' });
+    }
+
+    medication = new Medication({
+      patientId,
+      medications,
+    });
+
+    await medication.save();
+    res.status(201).json(medication);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Update medication by patientId
+async function updateMedicationById(req, res) {
+  const { medications } = req.body;
+
+  try {
+    const medication = await Medication.findOneAndUpdate(
+      { patientId: req.params.patientId },
+      { $set: { medications } },
+      { new: true }
+    );
+
+    if (!medication) {
+      return res.status(404).json({ message: 'Medication not found' });
+    }
+
+    res.json(medication);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Delete medication by patientId
+async function deleteMedicationById(req, res){
+  try {
+    const medication = await Medication.findOneAndDelete({ patientId: req.params.patientId });
+
+    if (!medication) {
+      return res.status(404).json({ message: 'Medication not found' });
+    }
+
+    res.json({ message: 'Medication deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 
 async function getMedicationById(req, res) {
   const { patientId } = req.params;
