@@ -1,3 +1,6 @@
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+
 const staffSchema = new mongoose.Schema({
   staffId: { type: String, required: true },
   name: { type: String, required: true },

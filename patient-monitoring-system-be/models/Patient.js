@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 
 const medicationSchema = new mongoose.Schema({
   name: { type: String },
