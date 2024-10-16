@@ -8,7 +8,7 @@ app.use(cors())
 const port = 5000;
 require('dotenv').config();
 
-const Medication = require("./models/medication");
+const Patient = require('./models/Patient');
 const mongoose = require('mongoose');
 
 
@@ -67,6 +67,7 @@ async function postMedication (req, res) {
   try {
     const { patientId } = req.params;
     const newMedication = req.body;
+    console.log(newMedication)
     const patient = await Patient.findOne({ patientId });
     if (patient) {
       patient.medications.push(newMedication);
