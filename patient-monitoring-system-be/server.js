@@ -2,35 +2,38 @@ const express = require('express');
 const fs = require('fs');
 const cors = require('cors');
 const path = require('path');
-const app = express();
-app.use(express.json());
-app.use(cors())
-const port = 5000;
-require('dotenv').config();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
+require('dotenv').config();
+
 const Doctor = require('./models/Doctor');
 const Staff = require('./models/Staff');
 const Patient = require('./models/Patient');
 
-const router = express.Router();
+const app = express();
+const port = 5000;
 
-const mongoose = require('mongoose');
+// Middleware
+app.use(express.json());
+app.use(cors());
 
-
+// MongoDB Connection
 // mongoose.connect(process.env.MONGO_URI, {
 //   serverSelectionTimeoutMS: 5000, // Timeout after 5s
 // })
 //   .then(() => {
 //     console.log('Connected to MongoDB Atlas successfully!');
-    
 //   })
 //   .catch((error) => {
 //     console.error('Failed to connect to MongoDB Atlas:', error);
 //   });
 
+const salt =  bcrypt.genSalt(10);
+const hashedPassword =  bcrypt.hash("password1", salt);
+console.log(hashedPassword)
 // Login API
-router.post('/login', async (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const { email, password, role } = req.body;
 
   try {
@@ -53,6 +56,7 @@ router.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
+      console.log("pass")
     }
 
     const token = jwt.sign({ id: user._id, role }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -61,9 +65,6 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
-
-module.exports = router;
-
 
 // Routes
 app.get('/api/patients', getPatients);
