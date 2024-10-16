@@ -27,10 +27,11 @@ const mongoose = require('mongoose');
 // Routes
 app.get('/api/patients', getPatients);
 app.get('/api/patient/:id', getPatientById);
+app.get('/api/patients/:patientId', getAPatientById);
 app.get('/api/medications/:patientId', getMedicationById );
-app.post('/api/madication/', postMedication);
-app.put('api/medication/:patientId', updateMedicationById);
-app.delete('api/medication/:patientId', deleteMedicationById);
+app.post('/api/medications/:patientId/', postMedication);
+app.put('/api/medications/:patientId/:medicationIndex', updateMedicationById);
+app.delete('/api/medications/:patientId/:medicationIndex', deleteMedicationById);
 
 
 // Functions
@@ -46,92 +47,71 @@ async function getPatients(req, res) {
   });
 }
 
-// Serve medication details from the JSON file
-// async function getMedicationById(req, res)  {
-//   try {
-//     const { patientId } = req.params;
-//     const medication = await Medication.findOne({ patientId });
 
-//     if (medication) {
-//       res.status(200).json(medication);
-//     } else {
-//       res.status(404).json({ message: 'Medications not found for the specified patient.' });
-//     }
-//   } catch (error) {
-//     res.status(500).json({ message: 'An error occurred while fetching medication data.', error });
-//   }
-// };
-
-// Get medication by patientId
-async function getMedicationById(req, res) {
+async function getAPatientById(req, res) {
   try {
-    const medication = await Medication.findOne({ patientId: req.params.patientId });
-    if (!medication) {
-      return res.status(404).json({ message: 'Medication not found' });
+    const { patientId } = req.params;
+    const patient = await Patient.findOne({ patientId });
+    if (patient) {
+      res.status(200).json(patient);
+    } else {
+      res.status(404).json({ message: 'Patient not found' });
     }
-    res.json(medication);
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-// Add medication for a patient
-async function postMedication(req, res) {
-  const { patientId, medications } = req.body;
-
+// Add a new medication by patientId
+async function postMedication (req, res) {
   try {
-    // Check if a record for the patient already exists
-    let medication = await Medication.findOne({ patientId });
-
-    if (medication) {
-      return res.status(400).json({ message: 'Medication already exists for this patient' });
+    const { patientId } = req.params;
+    const newMedication = req.body;
+    const patient = await Patient.findOne({ patientId });
+    if (patient) {
+      patient.medications.push(newMedication);
+      await patient.save();
+      res.status(201).json(newMedication);
+    } else {
+      res.status(404).json({ message: 'Patient not found' });
     }
-
-    medication = new Medication({
-      patientId,
-      medications,
-    });
-
-    await medication.save();
-    res.status(201).json(medication);
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(400).json({ message: 'Bad request' });
   }
 };
 
-// Update medication by patientId
-async function updateMedicationById(req, res) {
-  const { medications } = req.body;
-
+// Update a medication by patientId and medication index
+async function updateMedicationById (req, res) {
   try {
-    const medication = await Medication.findOneAndUpdate(
-      { patientId: req.params.patientId },
-      { $set: { medications } },
-      { new: true }
-    );
-
-    if (!medication) {
-      return res.status(404).json({ message: 'Medication not found' });
+    const { patientId, medicationIndex } = req.params;
+    const updatedMedication = req.body;
+    const patient = await Patient.findOne({ patientId });
+    if (patient && patient.medications[medicationIndex]) {
+      patient.medications[medicationIndex] = updatedMedication;
+      await patient.save();
+      res.status(200).json(updatedMedication);
+    } else {
+      res.status(404).json({ message: 'Patient or medication not found' });
     }
-
-    res.json(medication);
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(400).json({ message: 'Bad request' });
   }
 };
 
-// Delete medication by patientId
-async function deleteMedicationById(req, res){
+// Delete a medication by patientId and medication index
+async function deleteMedicationById(req, res) {
   try {
-    const medication = await Medication.findOneAndDelete({ patientId: req.params.patientId });
-
-    if (!medication) {
-      return res.status(404).json({ message: 'Medication not found' });
+    const { patientId, medicationIndex } = req.params;
+    const patient = await Patient.findOne({ patientId });
+    if (patient && patient.medications[medicationIndex]) {
+      patient.medications.splice(medicationIndex, 1);
+      await patient.save();
+      res.status(200).json({ message: 'Medication deleted successfully' });
+    } else {
+      res.status(404).json({ message: 'Patient or medication not found' });
     }
-
-    res.json({ message: 'Medication deleted' });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
 
