@@ -6,6 +6,7 @@ import { Card, Row, Col, Spinner } from 'react-bootstrap';
 import { Navbar, Nav, Container, Table, Button } from 'react-bootstrap';
 import { FaHome, FaSignOutAlt } from 'react-icons/fa';
 import 'chart.js/auto';  // Needed for Chart.js
+import axios from 'axios';
 
 const DoctorDashboard = () => {
   const [patients, setPatients] = useState([]);
@@ -34,7 +35,12 @@ const DoctorDashboard = () => {
 
     const fetchOxygenLevel = async (patientId) => {
       try {
-        const oxygenLevel = (90 + (Math.random() * 10 - 5)).toFixed(2); // Simulated live oxygen level
+        const response = await axios.get('https://api.thingspeak.com/channels/2665187/feeds.json?api_key=ICI5E0LU5026E7TH&results=10')
+
+        // console.log("current oxygen level", response.data.feeds[0].field3);
+        const oxygenLevel = response.data.feeds[[Math.floor(Math.random()*response.data.feeds.length)]].field3; // Simulated live oxygen level
+
+        // console.log("required oxygen level", oxygenLevel);
         const predictedLevel = (oxygenLevel * (1 + (Math.random() * 0.05 - 0.025))).toFixed(2); // Simulated predicted level
 
         setOxygenLevels(prevState => {
