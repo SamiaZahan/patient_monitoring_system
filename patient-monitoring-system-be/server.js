@@ -53,7 +53,6 @@ app.post('/api/auth/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
-      console.log("pass")
     }
 
     const token = jwt.sign({ id: user._id, role }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -106,7 +105,6 @@ async function postMedication (req, res) {
   try {
     const { patientId } = req.params;
     const newMedication = req.body;
-    console.log(newMedication)
     const patient = await Patient.findOne({ patientId });
     if (patient) {
       patient.medications.push(newMedication);
