@@ -2,6 +2,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Chart from 'chart.js/auto';
 import { styles } from './PatientDashboardStyle';
+import { Button } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+import { FaSignOutAlt } from 'react-icons/fa';
 
 const dummyUserData = {
   username: "John Doe"
@@ -20,6 +23,7 @@ export default function Component() {
   const [wellnessTips, setWellnessTips] = useState([]);
   const [healthStatus, setHealthStatus] = useState("");
   const [userData, setUserData] = useState({});
+  const navigate = useNavigate();
 
   const lineChartRef = useRef(null);
   const doughnutChartRef = useRef(null);
@@ -137,12 +141,19 @@ export default function Component() {
     { medication: 'Vitamin D', time: '12:00 PM' },
   ];
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/');
+  };
   return (
     <>
       <style>{styles}</style>
       <div className="dashboard-container">
         <div className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
           {/* Sidebar content */}
+          <Button onClick={handleLogout} className="mt-auto w-100">
+            <FaSignOutAlt /> Logout 
+          </Button>
         </div>
 
         {sidebarOpen && <div className="overlay" onClick={closeSidebar}></div>}

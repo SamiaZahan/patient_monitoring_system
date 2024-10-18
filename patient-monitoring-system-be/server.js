@@ -66,10 +66,16 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/patients', getPatients);
 app.get('/api/patient/:id', getPatientById);
 app.get('/api/patients/:patientId', getAPatientById);
+
 app.get('/api/medications/:patientId', getMedicationById );
 app.post('/api/medications/:patientId/', postMedication);
 app.put('/api/medications/:patientId/:medicationIndex', updateMedicationById);
 app.delete('/api/medications/:patientId/:medicationIndex', deleteMedicationById);
+
+app.post('/api/tests/:patientId', addTest);
+app.get('/api/tests/:patientId', getTests);
+app.put('/api/tests/:patientId/:testIndex', updateTest);
+app.delete('/api/tests/:patientId/:testIndex', deleteTest);
 
 
 // Functions
@@ -181,9 +187,6 @@ async function getMedicationById(req, res) {
   });
 }
 
-// Rafi vai work on Medication Post, Uopdate, Delete
-
-
 async function getPatientById(req, res) {
   const patientId = req.params.id; // No need to parseInt
 
@@ -201,6 +204,93 @@ async function getPatientById(req, res) {
     res.json(patient);
   });
 }
+
+
+// Function to add a new test to a specific patient by patient ID
+async function addTest (req, res) {
+  try {
+    const { patientId } = req.params;
+    const newTest = req.body;
+
+    const patient = await Patient.findOne({ patientId });
+    if (!patient) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+
+    patient.tests.push(newTest);
+    console.log("before save")
+    await patient.save();
+    console.log("After save")
+
+
+    res.status(201).json(newTest);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to add test' });
+  }
+};
+
+// Function to get all tests for a specific patient by patient ID
+async function getTests (req, res) {
+  try {
+    const { patientId } = req.params;
+    const patient = await Patient.findOne({ patientId });
+
+    if (!patient) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+
+    res.status(200).json(patient.tests);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch tests' });
+  }
+};
+
+// Function to update a specific test by patient ID and test index
+async function updateTest (req, res) {
+  try {
+    const { patientId, testIndex } = req.params;
+    const updatedTest = req.body;
+
+    const patient = await Patient.findOne({ patientId });
+    if (!patient) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+
+    if (testIndex < 0 || testIndex >= patient.tests.length) {
+      return res.status(400).json({ error: 'Invalid test index' });
+    }
+
+    patient.tests[testIndex] = { ...patient.tests[testIndex], ...updatedTest };
+    await patient.save();
+
+    res.status(200).json(patient.tests[testIndex]);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update test' });
+  }
+};
+
+// Function to delete a specific test by patient ID and test index
+async function deleteTest (req, res) {
+  try {
+    const { patientId, testIndex } = req.params;
+
+    const patient = await Patient.findOne({ patientId });
+    if (!patient) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+
+    if (testIndex < 0 || testIndex >= patient.tests.length) {
+      return res.status(400).json({ error: 'Invalid test index' });
+    }
+
+    patient.tests.splice(testIndex, 1);
+    await patient.save();
+
+    res.status(200).json({ message: 'Test deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete test' });
+  }
+};
 
 app.use((err, req, res, next) => {
     console.error(err.stack);

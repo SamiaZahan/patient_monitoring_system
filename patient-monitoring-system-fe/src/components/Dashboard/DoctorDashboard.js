@@ -12,7 +12,7 @@ const DoctorDashboard = () => {
   const [oxygenLevels, setOxygenLevels] = useState({});
   const [predictedLevels, setPredictedLevels] = useState({});
   const navigate = useNavigate();
-  const FETCH_INTERVAL = 1000; // 10 seconds
+  const FETCH_INTERVAL = 1000; // 1 seconds
   const HOUR_LIMIT = 60 / 2; // number of 10-second intervals in 2 mins
 
   const intervalsRef = useRef({});
@@ -116,6 +116,11 @@ const DoctorDashboard = () => {
     return times;
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/');
+  };
+
   const upcomingTimes = getUpcomingTimes();
 
   return (
@@ -126,9 +131,10 @@ const DoctorDashboard = () => {
             <FaHome /> Home
           </Navbar.Brand>
           <Nav className="ml-auto">
-            <Nav.Link href="#profile">My Profile</Nav.Link>
-            <Nav.Link href="#logout">
-              <FaSignOutAlt /> Logout
+            <Nav.Link href="#profile">Profile</Nav.Link>
+           
+            <Nav.Link  onClick={handleLogout} className="w-100">
+                <FaSignOutAlt /> Logout 
             </Nav.Link>
           </Nav>
         </Container>
