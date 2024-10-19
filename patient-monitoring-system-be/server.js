@@ -78,17 +78,14 @@ app.put('/api/tests/:patientId/:testIndex', updateTest);
 app.delete('/api/tests/:patientId/:testIndex', deleteTest);
 
 
-// Functions
 async function getPatients(req, res) {
-  const patientsPath = path.join(__dirname, 'patients.json');
-  fs.readFile(patientsPath, 'utf8', (err, data) => {
-    if (err) {
-      console.error('Error reading order.json file:', err);
-      res.status(500).json({ error: 'Internal Server Error' });
-      return;
-    }
-    res.json(JSON.parse(data));
-  });
+  try {
+    const patients = await Patient.find();
+    res.json(patients);
+  } catch (error) {
+    console.error('Error fetching patients from the database:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 }
 
 

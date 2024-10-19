@@ -30,6 +30,8 @@ const patientSchema = new mongoose.Schema({
   tests: [testSchema], // Adding the tests array for storing information about tests
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  readAPI: { type: String, required: true},
+  channelId: {type: Number, required: true}
 });
 
 // Middleware to hash password before saving to DB

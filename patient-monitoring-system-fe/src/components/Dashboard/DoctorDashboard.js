@@ -13,67 +13,83 @@ const DoctorDashboard = () => {
   const [oxygenLevels, setOxygenLevels] = useState({});
   const [predictedLevels, setPredictedLevels] = useState({});
   const navigate = useNavigate();
-  const FETCH_INTERVAL = 1000; // 1 seconds
-  const HOUR_LIMIT = 60 / 2; // number of 10-second intervals in 2 mins
+  const FETCH_INTERVAL = 16000; // Fetch interval in milliseconds (16 seconds to allow some buffer)
+  const HOUR_LIMIT = 12; // Assuming data points are collected every 15 seconds for a 3-minute window
 
   const intervalsRef = useRef({});
 
   useEffect(() => {
     const fetchPatients = async () => {
-      const response = await fetch('http://localhost:5000/api/patients');
-      const data = await response.json();
-      setPatients(data);
-
-      // Fetch live oxygen level for each patient
-      data.forEach(patient => {
-        if (!intervalsRef.current[patient.patientId]) {
-          fetchOxygenLevel(patient.patientId);
-          intervalsRef.current[patient.patientId] = setInterval(() => fetchOxygenLevel(patient.patientId), FETCH_INTERVAL);
-        }
-      });
-    };
-
-    const fetchOxygenLevel = async (patientId) => {
       try {
-        const response = await axios.get('https://api.thingspeak.com/channels/2665187/feeds.json?api_key=ICI5E0LU5026E7TH&results=10')
+        const response = await fetch('http://localhost:5000/api/patients');
+        const data = await response.json();
+        setPatients(data);
 
-        // console.log("current oxygen level", response.data.feeds[0].field3);
-        const oxygenLevel = response.data.feeds[[Math.floor(Math.random()*response.data.feeds.length)]].field3; // Simulated live oxygen level
-
-        // console.log("required oxygen level", oxygenLevel);
-        const predictedLevel = (oxygenLevel * (1 + (Math.random() * 0.05 - 0.025))).toFixed(2); // Simulated predicted level
-
-        setOxygenLevels(prevState => {
-          const updatedLevels = prevState[patientId] || [];
-          if (updatedLevels.length >= HOUR_LIMIT) {
-            updatedLevels.shift();
+        // Fetch live oxygen level for each patient
+        data.forEach(patient => {
+          if (!intervalsRef.current[patient.patientId]) {
+            fetchOxygenLevel(patient.patientId, patient.channelId, patient.readAPI);
+            intervalsRef.current[patient.patientId] = setInterval(() => fetchOxygenLevel(patient.patientId, patient.channelId, patient.readAPI), FETCH_INTERVAL);
           }
-          const newDataPoint = {
-            time: new Date().toLocaleTimeString(),
-            value: oxygenLevel
-          };
-          return {
-            ...prevState,
-            [patientId]: [...updatedLevels, newDataPoint]
-          };
-        });
-
-        setPredictedLevels(prevState => {
-          const updatedLevels = prevState[patientId] || [];
-          if (updatedLevels.length >= HOUR_LIMIT) {
-            updatedLevels.shift();
-          }
-          const newPredictedPoint = {
-            time: new Date().toLocaleTimeString(),
-            value: predictedLevel
-          };
-          return {
-            ...prevState,
-            [patientId]: [...updatedLevels, newPredictedPoint]
-          };
         });
       } catch (error) {
-        console.error("Error fetching oxygen level:", error);
+        console.error('Error fetching patients:', error);
+      }
+    };
+
+    const fetchOxygenLevel = async (patientId, channelId, readAPI) => {
+      try {
+        const response = await axios.get(`https://api.thingspeak.com/channels/${channelId}/feeds.json`, {
+          params: {
+            api_key: readAPI,
+            results: 1, // Fetch only the latest data point
+          },
+        });
+        const feed = response.data.feeds[0]; // Get the latest data point
+    
+        if (feed) {
+          const oxygenLevel = feed.field1;
+          const createdAt = feed.created_at;
+
+          if (oxygenLevel) {
+            const predictedLevel = (
+              oxygenLevel *
+              (1 + (Math.random() * 0.05 - 0.025))
+            ).toFixed(2); // Simulated predicted level
+
+            setOxygenLevels((prevState) => {
+              const updatedLevels = prevState[patientId] || [];
+              if (updatedLevels.length >= HOUR_LIMIT) {
+                updatedLevels.shift(); // Remove oldest data point if limit is reached
+              }
+              const newDataPoint = {
+                time: new Date(createdAt).toLocaleTimeString(),
+                value: oxygenLevel,
+              };
+              return {
+                ...prevState,
+                [patientId]: [...updatedLevels, newDataPoint],
+              };
+            });
+
+            setPredictedLevels((prevState) => {
+              const updatedLevels = prevState[patientId] || [];
+              if (updatedLevels.length >= HOUR_LIMIT) {
+                updatedLevels.shift(); // Remove oldest data point if limit is reached
+              }
+              const newPredictedPoint = {
+                time: new Date(createdAt).toLocaleTimeString(),
+                value: predictedLevel,
+              };
+              return {
+                ...prevState,
+                [patientId]: [...updatedLevels, newPredictedPoint],
+              };
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching oxygen level:', error);
       }
     };
 
@@ -138,9 +154,8 @@ const DoctorDashboard = () => {
           </Navbar.Brand>
           <Nav className="ml-auto">
             <Nav.Link href="#profile">Profile</Nav.Link>
-           
-            <Nav.Link  onClick={handleLogout} className="w-100">
-                <FaSignOutAlt /> Logout 
+            <Nav.Link onClick={handleLogout} className="w-100">
+              <FaSignOutAlt /> Logout
             </Nav.Link>
           </Nav>
         </Container>
@@ -177,9 +192,9 @@ const DoctorDashboard = () => {
           {patients.map((patient) => {
             const latestOxygenLevel = oxygenLevels[patient.patientId]?.slice(-1)[0]?.value;
             return (
-              <Col key={patient.id} md={12} className="mb-4">
+              <Col key={patient.patientId} md={12} className="mb-4">
                 <Card className="patient-card" style={{ backgroundColor: latestOxygenLevel ? getCardColor(latestOxygenLevel) : 'white' }}
-                onClick={() => handlePatientClick(patient.patientId)} >  
+                  onClick={() => handlePatientClick(patient.patientId)}>
                   <Card.Body>
                     <Card.Title>{patient.name}</Card.Title>
                     <Card.Text>ID: {patient.patientId}</Card.Text>
