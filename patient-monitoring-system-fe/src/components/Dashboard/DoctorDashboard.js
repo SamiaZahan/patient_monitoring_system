@@ -149,11 +149,11 @@ const DoctorDashboard = () => {
     <div className="doctor-dashboard-container">
       <Navbar bg="primary" variant="dark" expand="lg">
         <Container>
-          <Navbar.Brand href="#home">
+          <Navbar.Brand href="/doctor-dashboard">
             <FaHome /> Home
           </Navbar.Brand>
           <Nav className="ml-auto">
-            <Nav.Link href="#profile">Profile</Nav.Link>
+            <Nav.Link href="doctor-profile">Profile</Nav.Link>
             <Nav.Link onClick={handleLogout} className="w-100">
               <FaSignOutAlt /> Logout
             </Nav.Link>

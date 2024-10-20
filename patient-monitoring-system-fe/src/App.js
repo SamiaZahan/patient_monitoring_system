@@ -8,6 +8,7 @@ import DoctorDashboard from './components/Dashboard/DoctorDashboard';
 import PatientDashboard from './components/Dashboard/PatientDashboard';
 import StaffDashboard from './components/Dashboard/StaffDashboard';
 import PatientDetail from './components/Dashboard/PatientDetail';
+import DoctorProfile from './components/Dashboard/DoctorProfile'
 
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
                 <Route path="/" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/doctor-dashboard" element={<DoctorDashboard />} />
+                <Route path="/doctor-profile" element={<DoctorProfile />} />
                 <Route path="/staff-dashboard" element={<StaffDashboard />} />
                 <Route path="/patient-dashboard" element={<PatientDashboard />} />
 
