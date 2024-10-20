@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Line } from 'react-chartjs-2';
 import { useNavigate } from 'react-router-dom';
-import { Card, Row, Col, Spinner } from 'react-bootstrap';
+import { Card, Row, Col, Spinner, Alert } from 'react-bootstrap';
 import { Navbar, Nav, Container, Table, Button } from 'react-bootstrap';
 import { FaHome, FaSignOutAlt } from 'react-icons/fa';
 import 'chart.js/auto';  // Needed for Chart.js
@@ -12,6 +12,7 @@ const DoctorDashboard = () => {
   const [patients, setPatients] = useState([]);
   const [oxygenLevels, setOxygenLevels] = useState({});
   const [predictedLevels, setPredictedLevels] = useState({});
+  const [criticalAlert, setCriticalAlert] = useState(null);
   const navigate = useNavigate();
   const FETCH_INTERVAL = 16000; // Fetch interval in milliseconds (16 seconds to allow some buffer)
   const HOUR_LIMIT = 12; // Assuming data points are collected every 15 seconds for a 3-minute window
@@ -23,6 +24,7 @@ const DoctorDashboard = () => {
       try {
         const response = await fetch('http://localhost:5000/api/patients');
         const data = await response.json();
+        data.sort((a, b) => a.priority - b.priority);
         setPatients(data);
 
         // Fetch live oxygen level for each patient
@@ -48,7 +50,7 @@ const DoctorDashboard = () => {
         const feed = response.data.feeds[0]; // Get the latest data point
     
         if (feed) {
-          const oxygenLevel = feed.field1;
+          const oxygenLevel = parseFloat(feed.field1);
           const createdAt = feed.created_at;
 
           if (oxygenLevel) {
@@ -69,6 +71,9 @@ const DoctorDashboard = () => {
 
             // Fetch predictions from the backend
             fetchPredictions(patientId, channelId, readAPI, new Date(createdAt));
+
+            // Check for critical oxygen level and set alert
+            checkForCriticalAlert(patientId, oxygenLevel);
           }
         }
       } catch (error) {
@@ -105,6 +110,15 @@ const DoctorDashboard = () => {
       }
     };
 
+    const checkForCriticalAlert = (patientId, oxygenLevel) => {
+      if (oxygenLevel < 89) {
+        setCriticalAlert(`Critical oxygen level detected for patient ${patientId}: ${oxygenLevel}%`);
+        setTimeout(() => {
+          setCriticalAlert(null);
+        }, 10000); // Clear alert after 10 seconds
+      }
+    };
+
     fetchPatients();
 
     return () => {
@@ -126,10 +140,41 @@ const DoctorDashboard = () => {
     };
   };
 
-  const getCardColor = (oxygenLevel) => {
-    if (oxygenLevel < 81 || oxygenLevel > 90) {
+  const getCardColor = (patient) => {
+    const latestOxygenLevel = oxygenLevels[patient.patientId]?.slice(-1)[0]?.value;
+    const predictedValues = predictedLevels[patient.patientId]?.map(point => point.value) || [];
+
+    // Determine zones based on age group
+    let normalZone, riskyZone, criticalZone;
+    if (patient.age <= 1) {
+      normalZone = [95, 100];
+      riskyZone = [90, 94];
+      criticalZone = [0, 89];
+    } else if (patient.age <= 12) {
+      normalZone = [95, 100];
+      riskyZone = [90, 94];
+      criticalZone = [0, 89];
+    } else if (patient.age <= 18) {
+      normalZone = [95, 100];
+      riskyZone = [90, 94];
+      criticalZone = [0, 89];
+    } else if (patient.age <= 64) {
+      normalZone = [95, 100];
+      riskyZone = [90, 94];
+      criticalZone = [0, 89];
+    } else {
+      normalZone = [94, 98];
+      riskyZone = [88, 93];
+      criticalZone = [0, 87];
+    }
+
+    // Check the actual and predicted oxygen levels
+    const isCritical = latestOxygenLevel <= criticalZone[1] || predictedValues.some(value => value <= criticalZone[1]);
+    const isRisky = latestOxygenLevel >= riskyZone[0] && latestOxygenLevel <= riskyZone[1] || predictedValues.some(value => value >= riskyZone[0] && value <= riskyZone[1]);
+
+    if (isCritical) {
       return 'rgba(255, 0, 0, 0.5)'; // Red with 50% opacity
-    } else if (oxygenLevel < 87) {
+    } else if (isRisky) {
       return 'rgba(255, 255, 0, 0.5)'; // Yellow with 50% opacity
     } else {
       return 'rgba(0, 255, 0, 0.5)'; // Green with 50% opacity
@@ -174,6 +219,7 @@ const DoctorDashboard = () => {
       </Navbar>
 
       <div className="container">
+        {criticalAlert && <Alert variant="danger">{criticalAlert}</Alert>}
         <Card className="mb-4">
           <Card.Body>
             <Card.Title>Upcoming Visiting Schedule</Card.Title>
@@ -202,10 +248,9 @@ const DoctorDashboard = () => {
         <h2 className="my-4">Patients Live SPO2</h2>
         <Row>
           {patients.map((patient) => {
-            const latestOxygenLevel = oxygenLevels[patient.patientId]?.slice(-1)[0]?.value;
             return (
               <Col key={patient.patientId} md={12} className="mb-4">
-                <Card className="patient-card" style={{ backgroundColor: latestOxygenLevel ? getCardColor(latestOxygenLevel) : 'white' }}
+                <Card className="patient-card" style={{ backgroundColor: getCardColor(patient) }}
                   onClick={() => handlePatientClick(patient.patientId)}>
                   <Card.Body>
                     <Card.Title>{patient.name}</Card.Title>

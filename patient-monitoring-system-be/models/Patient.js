@@ -20,6 +20,7 @@ const testSchema = new mongoose.Schema({
 
 const patientSchema = new mongoose.Schema({
   patientId: { type: String, required: true },
+  priority: {type: Number, required: true},
   name: { type: String, required: true },
   age: { type: Number, required: true },
   gender: { type: String, required: true },

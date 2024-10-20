@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Card } from 'react-bootstrap';
+import { Row, Col, Card, Navbar, Container, Nav } from 'react-bootstrap';
+import { FaHome, FaSignOutAlt } from 'react-icons/fa';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import MedicationSection from './MedicationSection';
 import TestSection from './TestSection'
 
@@ -10,7 +11,8 @@ const PatientDetail = () => {
   const [patientDetails, setPatientDetails] = useState({});
   const [medicationData, setMedicationData] = useState([]);
   const [testsData, setTestsData] = useState([]);
-  const [latestPrescription, setLatestPrescription] = useState(null);
+  const [priority, setPriority] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch all patient details, including medications and tests
@@ -18,7 +20,6 @@ const PatientDetail = () => {
       .then(response => {
         setPatientDetails(response.data);
         setMedicationData(response.data.medications);
-        setLatestPrescription(response.data.medications[response.data.medications.length - 1]); // Assuming the latest is the last one
         setTestsData(response.data.tests);
         console.log('patient details:', testsData);
       })
@@ -26,15 +27,55 @@ const PatientDetail = () => {
         console.error('Error fetching patient details:', error);
       });
   }, [patientId]);
-  
+
+
+  const handleUpdatePriority = async () => {
+    if (!priority || isNaN(priority)) {
+      alert('Please enter a valid priority number');
+      return;
+    }
+
+    try {
+      const response = await axios.put(`http://localhost:5000/api/patients/${patientId}/priority`, {
+        priority: parseInt(priority, 10)
+      });
+      alert(response.data.message);
+      setPriority('');
+      setPatientDetails(prevPatients => Array.isArray(prevPatients) ? prevPatients.map(patient => patient.patientId === patientId ? { ...patient, priority: parseInt(priority, 10) } : patient) : prevPatients);
+    } catch (error) {
+      console.error('Error updating priority:', error);
+      alert('Error updating priority');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/');
+  };
+
   return (
     <>
+       <Navbar bg="primary" variant="dark" expand="lg">
+        <Container>
+          <Navbar.Brand href="/doctor-dashboard">
+            <FaHome /> Home
+          </Navbar.Brand>
+          <Nav className="ml-auto">
+            <Nav.Link href="../doctor-profile">Profile</Nav.Link>
+            <Nav.Link onClick={handleLogout} className="w-100">
+              <FaSignOutAlt /> Logout
+            </Nav.Link>
+          </Nav>
+        </Container>
+      </Navbar>
+
       {/* Patient Details */}
       <Row className="justify-content-center">
         <Col md={8}>
           <Card className="shadow-lg mt-4">
             <Card.Body>
               <h4>Patient Details</h4>
+              <p><strong>Name:</strong> {patientDetails.name}</p>
               <p><strong>Age:</strong> {patientDetails.age}</p>
               <p><strong>Gender:</strong> {patientDetails.gender}</p>
               <p><strong>Condition:</strong> {patientDetails.condition}</p>
@@ -45,17 +86,21 @@ const PatientDetail = () => {
         </Col>
       </Row>
 
-      {/* Latest Prescription */}
+      {/*  Prioroty */}
       <Row className="justify-content-center">
         <Col md={8}>
           <Card className="shadow-lg mt-4">
             <Card.Body>
-              <h4>Latest Prescription</h4>
-              {latestPrescription ? (
-                <p>{`Medication: ${latestPrescription.name} - Morning: ${latestPrescription.morning}, Afternoon: ${latestPrescription.afternoon}, Evening: ${latestPrescription.evening}, Night: ${latestPrescription.night}`}</p>
-              ) : (
-                <p>No latest prescription available</p>
-              )}
+              <h4>Prioroty: {patientDetails.priority}</h4>
+              <div>
+                <input
+                  type="number"
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value)}
+                  placeholder="Enter new priority"
+                />
+                <button onClick={handleUpdatePriority}>Update Priority</button>
+              </div>            
             </Card.Body>
           </Card>
         </Col>

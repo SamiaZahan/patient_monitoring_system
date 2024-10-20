@@ -86,6 +86,7 @@ const verifyToken = (req, res, next) => {
 app.get('/api/patients', getPatients);
 app.get('/api/patient/:id', getPatientById);
 app.get('/api/patients/:patientId', getAPatientById);
+app.put('/api/patients/:id/priority', updatePriority); 
 
 app.get('/api/medications/:patientId', getMedicationById );
 app.post('/api/medications/:patientId/', postMedication);
@@ -100,59 +101,6 @@ app.delete('/api/tests/:patientId/:testIndex', deleteTest);
 app.get('/api/doctor/profile', verifyToken, getDoctorProfile);
 app.post('/api/predictOxygen', predictOxygen)
 
-// async function predictOxygen (req, res) {
-//   const { channelId, readApiKey } = req.body;
-//   console.log(channelId, readApiKey)
-//   if (!channelId || !readApiKey) {
-//     return res.status(400).json({ error: 'Missing channelId or readApiKey' });
-//   }
-
-//   try {
-//     // Fetch the last 50 values from ThingSpeak
-//     const response = await axios.get(`https://api.thingspeak.com/channels/${channelId}/feeds.json`, {
-//       params: {
-//         api_key: readApiKey,
-//         results: 50
-//       }
-//     });
-
-//     const feeds = response.data.feeds;
-//     if (feeds.length < 50) {
-//       return res.status(400).json({ error: 'Not enough data points available for prediction.' });
-//     }
-
-//     // Extract the field containing oxygen levels
-//     const recentData = feeds.map(feed => parseFloat(feed.field1));
-
-//     // Run the Python script to make predictions
-//     const options = {
-//       mode: 'text',
-//       pythonPath: 'python3',
-//       pythonOptions: ['-u'], // unbuffered output
-//       scriptPath: path.join(__dirname, '/prediction_model/'), // Path to your Python script
-//       args: recentData
-//     };
-//     console.log(options)
-
-//     PythonShell.run('predict_oxygen.py', options, (err, results) => {
-//       console.log("inside")
-
-//       if (err) {
-//         console.error('Error executing Python script:', err);
-//         return res.status(500).json({ error: 'Error executing prediction model.' });
-//       }
-
-//       // Results are returned as an array of lines; we expect a single line with space-separated values
-//       const predictions = results[0].split(" ").map(parseFloat);
-//       console.log(predictions)
-
-//       res.json(predictions);
-//     });
-//   } catch (error) {
-//     console.error('Error fetching data from ThingSpeak:', error);
-//     res.status(500).json({ error: 'Error fetching data from ThingSpeak.' });
-//   }
-// };
 
 async function predictOxygen(req, res) {
   const { channelId, readApiKey } = req.body;
@@ -176,7 +124,6 @@ async function predictOxygen(req, res) {
 
     // Extract the field containing oxygen levels
     const recentData = feeds.map(feed => parseFloat(feed.field1));
-    console.log('Recent Data:', recentData);
 
     // Run the Python script to make predictions
     const scriptPath = path.resolve(__dirname, 'prediction_model/predict_oxygen.py');
@@ -203,12 +150,9 @@ async function predictOxygen(req, res) {
 
       // Process output
       try {
-        // const predictions = outputData.trim().split(/\s+/).map(parseFloat).filter(value => !isNaN(value));
-        console.log(outputData)
         let predictions = outputData.trim().split(/\s+/).map(parseFloat).filter(value => !isNaN(value));
         predictions = predictions.slice(-10);
 
-        console.log('Predictions:', predictions);
         if (predictions.length === 10) {
           res.json(predictions);
         } else {
@@ -224,7 +168,6 @@ async function predictOxygen(req, res) {
     res.status(500).json({ error: 'Error fetching data from ThingSpeak.' });
   }
 }
-
 
 // Profile endpoint for doctors
 async function getDoctorProfile (req, res) {
@@ -263,6 +206,33 @@ async function getAPatientById(req, res) {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+// Edit patient priority by patient ID
+async function updatePriority (req, res) {
+  const patientId = req.params.id;
+  const { priority } = req.body;
+
+  if (typeof priority !== 'number') {
+    return res.status(400).json({ error: 'Priority must be a number' });
+  }
+
+  try {
+    // Assuming you're using a database to manage patients
+    const patient = await Patient.findOne({ patientId });
+    if (!patient) {
+      return res.status(404).json({ error: 'Patient not found' });
+    }
+
+    patient.priority = priority;
+    await patient.save();
+
+    res.json({ message: 'Priority updated successfully', patient });
+  } catch (error) {
+    console.error('Error updating priority:', error);
+    res.status(500).json({ error: 'Error updating priority' });
+  }
+};
+
 
 // Add a new medication by patientId
 async function postMedication (req, res) {
