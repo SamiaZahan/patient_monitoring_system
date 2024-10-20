@@ -46,4 +46,3 @@ for patient_id, api_key in patient_channels.items():
 
 for thread in threads:
     thread.join()
-s

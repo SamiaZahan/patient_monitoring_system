@@ -1,9 +1,8 @@
 // Samia
 import React, { useState, useEffect, useRef } from 'react';
-import { Line } from 'react-chartjs-2';
+import { Card, Row, Col, Image } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { Card, Row, Col, Spinner } from 'react-bootstrap';
-import { Navbar, Nav, Container, Table, Button } from 'react-bootstrap';
+import { Navbar, Nav, Container} from 'react-bootstrap';
 import { FaHome, FaSignOutAlt } from 'react-icons/fa';
 import 'chart.js/auto';  // Needed for Chart.js
 import axios from 'axios';
@@ -57,19 +56,33 @@ const DoctorProfile = () => {
           </Nav>
         </Container>
       </Navbar>
-      <diiv>
+      <div className="container doctor-profile w-50">
       {doctorProfile ? (
-        <div className="doctor-profile">
-          <h2>Welcome, Dr. {doctorProfile.name}</h2>
-          <p>Email: {doctorProfile.email}</p>
-          <p>Phone: {doctorProfile.phone}</p>
-          <p>Qualifications: {doctorProfile.qualifications}</p>
-        </div>
-        ) : (
-          <p>Loading profile...</p>
-        )}
-
-      </diiv>
+        <Card className="shadow-lg p-3 m-5 bg-white rounded">
+          <Row className="no-gutters">
+            <Col md={12}>
+              <Card.Body>
+              <Image
+                src={doctorProfile.image || 'https://via.placeholder.com/150'}
+                roundedCircle
+                alt="Doctor Profile"
+                fluid
+                className="my-3 profile-image"
+              />
+                <h2 className="card-title">{doctorProfile.name}</h2>
+                <Card.Text>
+                  <strong>Email:</strong> {doctorProfile.email} <br />
+                  <strong>Phone:</strong> {doctorProfile.phone} <br />
+                  <strong>Qualifications:</strong> {doctorProfile.qualifications}
+                </Card.Text>
+              </Card.Body>
+            </Col>
+          </Row>
+        </Card>
+      ) : (
+        <p>Loading profile...</p>
+      )}
+    </div>
     </div>
    
   )

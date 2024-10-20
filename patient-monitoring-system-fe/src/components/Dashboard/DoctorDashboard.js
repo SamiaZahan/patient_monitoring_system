@@ -52,11 +52,6 @@ const DoctorDashboard = () => {
           const createdAt = feed.created_at;
 
           if (oxygenLevel) {
-            const predictedLevel = (
-              oxygenLevel *
-              (1 + (Math.random() * 0.05 - 0.025))
-            ).toFixed(2); // Simulated predicted level
-
             setOxygenLevels((prevState) => {
               const updatedLevels = prevState[patientId] || [];
               if (updatedLevels.length >= HOUR_LIMIT) {
@@ -72,24 +67,41 @@ const DoctorDashboard = () => {
               };
             });
 
-            setPredictedLevels((prevState) => {
-              const updatedLevels = prevState[patientId] || [];
-              if (updatedLevels.length >= HOUR_LIMIT) {
-                updatedLevels.shift(); // Remove oldest data point if limit is reached
-              }
-              const newPredictedPoint = {
-                time: new Date(createdAt).toLocaleTimeString(),
-                value: predictedLevel,
-              };
-              return {
-                ...prevState,
-                [patientId]: [...updatedLevels, newPredictedPoint],
-              };
-            });
+            // Fetch predictions from the backend
+            fetchPredictions(patientId, channelId, readAPI, new Date(createdAt));
           }
         }
       } catch (error) {
         console.error('Error fetching oxygen level:', error);
+      }
+    };
+
+    const fetchPredictions = async (patientId, channelId, readAPI, lastRealTime) => {
+      try {
+        const response = await axios.post('http://localhost:5000/api/predictOxygen', {
+          channelId,
+          readApiKey: readAPI
+        });
+        const predictions = response.data;
+
+        console.log("predictions", predictions);
+
+        setPredictedLevels((prevState) => {
+          const updatedLevels = [];
+          predictions.forEach((value, index) => {
+            const predictionTime = new Date(lastRealTime.getTime() + (index + 1) * 16000);
+            updatedLevels.push({
+              time: predictionTime.toLocaleTimeString(),
+              value: value,
+            });
+          });
+          return {
+            ...prevState,
+            [patientId]: updatedLevels,
+          };
+        });
+      } catch (error) {
+        console.error('Error fetching predictions:', error);
       }
     };
 

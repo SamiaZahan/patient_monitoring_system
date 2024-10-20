@@ -5,9 +5,9 @@ code link
 https://github.com/jaungiers/LSTM-Neural-Network-for-Time-Series-Prediction
 
 Run Command:
-
+python3 -m venv myenv
 source myenv/bin/activate
-python3 oxygen_level_predictiton.py
+python3 oxygen_level_prediction_tarin.py
 
 
 Relevant Research References:
