@@ -62,6 +62,22 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// Middleware to verify token
+const verifyToken = (req, res, next) => {
+  const token = req.header('Authorization').replace('Bearer ', '');
+  if (!token) {
+    return res.status(401).json({ message: 'Access denied. No token provided.' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded; // { id: user._id, role }
+    next();
+  } catch (error) {
+    res.status(400).json({ message: 'Invalid token.' });
+  }
+};
+
 // Routes
 app.get('/api/patients', getPatients);
 app.get('/api/patient/:id', getPatientById);
@@ -76,6 +92,22 @@ app.post('/api/tests/:patientId', addTest);
 app.get('/api/tests/:patientId', getTests);
 app.put('/api/tests/:patientId/:testIndex', updateTest);
 app.delete('/api/tests/:patientId/:testIndex', deleteTest);
+
+app.get('/api/doctor/profile', verifyToken, getDoctorProfile);
+
+
+// Profile endpoint for doctors
+async function getDoctorProfile (req, res) {
+  try {
+    const doctor = await Doctor.findById(req.user.id);
+    if (!doctor) {
+      return res.status(404).json({ message: 'Doctor not found' });
+    }
+    res.status(200).json(doctor);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 
 
 async function getPatients(req, res) {

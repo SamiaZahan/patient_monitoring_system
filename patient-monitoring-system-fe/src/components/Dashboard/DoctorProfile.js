@@ -8,7 +8,35 @@ import { FaHome, FaSignOutAlt } from 'react-icons/fa';
 import 'chart.js/auto';  // Needed for Chart.js
 import axios from 'axios';
 const DoctorProfile = () => {
+  const [doctorProfile, setDoctorProfile] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchDoctorProfile = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          navigate('/'); // Redirect to login if no token found
+        }
+
+        const response = await axios.get('http://localhost:5000/api/doctor/profile', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        setDoctorProfile(response.data);
+      } catch (error) {
+        console.error('Error fetching doctor profile:', error);
+        alert('Error fetching profile');
+    
+      }
+    };
+
+    fetchDoctorProfile();
+  },[]);
+
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/');
@@ -30,8 +58,18 @@ const DoctorProfile = () => {
         </Container>
       </Navbar>
       <diiv>
-      <h1>Profile</h1>
-    </diiv>
+      {doctorProfile ? (
+        <div className="doctor-profile">
+          <h2>Welcome, Dr. {doctorProfile.name}</h2>
+          <p>Email: {doctorProfile.email}</p>
+          <p>Phone: {doctorProfile.phone}</p>
+          <p>Qualifications: {doctorProfile.qualifications}</p>
+        </div>
+        ) : (
+          <p>Loading profile...</p>
+        )}
+
+      </diiv>
     </div>
    
   )
