@@ -98,6 +98,7 @@ app.get('/api/tests/:patientId', getTests);
 app.put('/api/tests/:patientId/:testIndex', updateTest);
 app.delete('/api/tests/:patientId/:testIndex', deleteTest);
 
+app.get('/api/doctors', getDoctors);
 app.get('/api/doctor/profile', verifyToken, getDoctorProfile);
 app.post('/api/predictOxygen', predictOxygen)
 
@@ -169,6 +170,15 @@ async function predictOxygen(req, res) {
   }
 }
 
+async function getDoctors(req, res) {
+  try {
+    const doctors = await Doctor.find();
+    res.json(doctors);
+  } catch (error) {
+    console.error('Error fetching doctors from the database:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+}
 // Profile endpoint for doctors
 async function getDoctorProfile (req, res) {
   try {

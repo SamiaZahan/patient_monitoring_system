@@ -10,6 +10,7 @@ import axios from 'axios';
 
 const DoctorDashboard = () => {
   const [patients, setPatients] = useState([]);
+  const [doctors, setDoctors] = useState([])
   const [oxygenLevels, setOxygenLevels] = useState({});
   const [predictedLevels, setPredictedLevels] = useState({});
   const [criticalAlert, setCriticalAlert] = useState(null);
@@ -22,13 +23,16 @@ const DoctorDashboard = () => {
   useEffect(() => {
     const fetchPatients = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/patients');
-        const data = await response.json();
-        data.sort((a, b) => a.priority - b.priority);
-        setPatients(data);
+        const response_patients = await fetch('http://localhost:5000/api/patients');
+        const data_patients = await response_patients.json();
+        const response_doctors = await fetch('http://localhost:5000/api/doctors');
+        const data_doctors = await response_doctors.json();
+        data_patients.sort((a, b) => a.priority - b.priority);
+        setPatients(data_patients);
+        setDoctors(data_doctors)
 
         // Fetch live oxygen level for each patient
-        data.forEach(patient => {
+        data_patients.forEach(patient => {
           if (!intervalsRef.current[patient.patientId]) {
             fetchOxygenLevel(patient.patientId, patient.channelId, patient.readAPI);
             intervalsRef.current[patient.patientId] = setInterval(() => fetchOxygenLevel(patient.patientId, patient.channelId, patient.readAPI), FETCH_INTERVAL);
@@ -233,14 +237,17 @@ const DoctorDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {patients.map((patient, index) => (
+              {patients.map((patient, index) => {
+                const doctor = doctors[index]; 
+                return (
                   <tr key={index}>
                     <td>{upcomingTimes[index]}</td>
-                    <td>{patient.age}</td>
+                    <td>{doctor?.name}</td>
                     <td>{patient.name}</td>
                     <td>{patient.roomNo}</td>
                   </tr>
-                ))}
+                );
+              })}
               </tbody>
             </Table>
           </Card.Body>
@@ -254,7 +261,9 @@ const DoctorDashboard = () => {
                   onClick={() => handlePatientClick(patient.patientId)}>
                   <Card.Body>
                     <Card.Title>{patient.name}</Card.Title>
+                    <Card.Text>Priority: {patient.priority}</Card.Text>
                     <Card.Text>ID: {patient.patientId}</Card.Text>
+
                     <Row>
                       <Col md={6}>
                         <h5>Actual Oxygen Level</h5>
